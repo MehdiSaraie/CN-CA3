@@ -31,7 +31,7 @@ int main(){
 				exit(0);
 			}
 		}
-		if (tokens[0] == "Connect" && tokens[1] == "Router"){ //for server & group server
+		else if (tokens[0] == "Connect" && tokens[1] == "Router"){ //for server & group server
 			string ip = tokens[2], router_ip = tokens[3], router_port = tokens[4];
 			int i;
 			for (i=0; i<devices.size(); i++){
@@ -40,43 +40,6 @@ int main(){
 				if (devices[i].ip == router_ip)
 					write(devices[i].main_pipe_w, input, strlen(input));
 			}
-		}
-		//////////////client
-		else if (tokens[0] == "Client"){
-			string name = tokens[1], server_ip = tokens[2], router_ip = tokens[3], router_port = tokens[4];
-
-			struct Device new_client;
-			new_client.name = name;
-			int main_pipe[2];
-			pipe(main_pipe);
-			new_client.main_pipe_w = main_pipe[1];
-			devices.push_back(new_client);
-			int n1 = fork();
-			if (n1 == 0){ //child
-				execlp("./client.out", &name[0], &server_ip[0], &router_ip[0], &router_port[0], &(to_string(main_pipe[0]))[0], NULL); 
-				exit(0);
-			}
-			/// ???
-			int i;
-			for (i=0; i<devices.size(); i++){
-				if (devices[i].ip == router_ip)
-					break;
-			}
-			string msg = "Connect Router " + name + " " + router_ip + " " + router_port;
-			write(devices[i].main_pipe_w, &msg[0], strlen(&msg[0]));
-			//cout << msg << devices[i].ip << "\n";
-			///
-		}
-		else if (tokens[0] == "Set" && tokens[1] == "IP"){ //for client & group server
-			string name = tokens[2], ip = tokens[3];
-			int i;
-			for(i=0; i<devices.size(); i++){
-				if(devices[i].name == name){
-					devices[i].ip = ip;
-					break;
-				}
-			}
-			write(devices[i].main_pipe_w, input, strlen(input));
 		}
 		//////////////group server
 		else if (tokens[0] == "Group_server"){
@@ -104,7 +67,108 @@ int main(){
 			}
 			write(devices[i].main_pipe_w, input, strlen(input));
 		}
+		else if (tokens[0] == "Set" && tokens[1] == "IP"){ //for group server & client
+			string name = tokens[2], ip = tokens[3];
+			int i;
+			for(i=0; i<devices.size(); i++){
+				if(devices[i].name == name){
+					devices[i].ip = ip;
+					break;
+				}
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
 		else if (tokens[0] == "Add" && tokens[1] == "server"){
+			string ip = tokens[2];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		//////////////client
+		else if (tokens[0] == "Client"){
+			string name = tokens[1], server_ip = tokens[2], router_ip = tokens[3], router_port = tokens[4];
+
+			struct Device new_client;
+			new_client.name = name;
+			int main_pipe[2];
+			pipe(main_pipe);
+			new_client.main_pipe_w = main_pipe[1];
+			devices.push_back(new_client);
+			int n1 = fork();
+			if (n1 == 0){ //child
+				execlp("./client.out", &name[0], &server_ip[0], &router_ip[0], &router_port[0], &(to_string(main_pipe[0]))[0], NULL); 
+				exit(0);
+			}
+			/// ???
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == router_ip)
+					break;
+			}
+			string msg = "Connect Router " + name + " " + router_ip + " " + router_port;
+			write(devices[i].main_pipe_w, &msg[0], strlen(&msg[0]));
+			//cout << msg << devices[i].ip << "\n";
+			///
+		}
+		else if (tokens[0] == "Get" && tokens[1] == "group" && tokens[2] == "list"){
+			string ip = tokens[3];
+			int i;
+			for(i=0; i<devices.size(); i++){
+				if(devices[i].ip == ip){
+					break;
+				}
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		else if ((tokens[0] == "Join" || tokens[0] == "Leave" || tokens[0] == "Select") && tokens[3] == "CN"){
+			string ip = tokens[1], group_name = tokens[2];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		else if (tokens[0] == "Send" && tokens[1] == "file"){
+			string ip = tokens[2], file_name = tokens[3], group_name = tokens[4];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		else if (tokens[0] == "Send" && tokens[1] == "message"){
+			string ip = tokens[2], message_body = tokens[3], group_name = tokens[4];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		else if (tokens[0] == "Show" && tokens[1] == "group"){
+			string ip = tokens[2];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		else if (tokens[0] == "Sync"){
+			string ip = tokens[1];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
+		}
+		else if (tokens[0] == "Sign" && tokens[1] == "Out"){
 			string ip = tokens[2];
 			int i;
 			for (i=0; i<devices.size(); i++){
@@ -138,6 +202,35 @@ int main(){
 				if (devices[i].ip == router2_ip)
 					write(devices[i].main_pipe_w, input, strlen(input));
 			}
+		}
+		else if (tokens[0] == "ChangeCost"){
+			string router1_ip = tokens[1], router2_ip = tokens[2], router1_port = tokens[3], router2_port = tokens[4], new_cost = tokens[5];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == router1_ip)
+					write(devices[i].main_pipe_w, input, strlen(input));
+				if (devices[i].ip == router2_ip)
+					write(devices[i].main_pipe_w, input, strlen(input));
+			}
+		}
+		else if (tokens[0] == "Disconnect"){
+			string router1_ip = tokens[1], router2_ip = tokens[2], router1_port = tokens[3], router2_port = tokens[4];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == router1_ip)
+					write(devices[i].main_pipe_w, input, strlen(input));
+				if (devices[i].ip == router2_ip)
+					write(devices[i].main_pipe_w, input, strlen(input));
+			}
+		}
+		else if (tokens[0] == "Show"){
+			string ip = tokens[2];
+			int i;
+			for (i=0; i<devices.size(); i++){
+				if (devices[i].ip == ip)
+					break;
+			}
+			write(devices[i].main_pipe_w, input, strlen(input));
 		}
 	}
 	return 0;
