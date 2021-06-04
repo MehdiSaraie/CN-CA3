@@ -3,6 +3,7 @@ int main(int argc, char* argv[]){
 	string name = argv[0], server_ip = argv[1], router_ip = argv[2], router_port = argv[3];
 	int main_pipe_r = atoi(argv[4]);
 	char buffer[LENGTH];
+	vector<string> group_names;
 	int from_router_fd = 0, to_router_fd = 0;
 	int max_fd, activity;
 	fd_set readfds;
@@ -30,7 +31,12 @@ int main(int argc, char* argv[]){
 			puts(buffer);
 			vector<string> tokens = input_tokenizer(buffer);
 			
-			
+			if (tokens[0] == "Show" && tokens[1] == "group"){
+				string ip = tokens[2];
+				for (int i = 0; i< group_names.size(); i++)
+					cout << group_names[i] << "    ";
+				cout << endl;
+			}
 		}
 		
 		if (FD_ISSET(from_router_fd, &readfds)){ //msg from router

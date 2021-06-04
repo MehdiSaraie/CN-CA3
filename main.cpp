@@ -204,24 +204,22 @@ int main(){
 			}
 		}
 		else if (tokens[0] == "ChangeCost"){
-			string router1_ip = tokens[1], router2_ip = tokens[2], router1_port = tokens[3], router2_port = tokens[4], new_cost = tokens[5];
+			string router_ip = tokens[1], router_port = tokens[2], new_cost = tokens[3];
 			int i;
 			for (i=0; i<devices.size(); i++){
-				if (devices[i].ip == router1_ip)
-					write(devices[i].main_pipe_w, input, strlen(input));
-				if (devices[i].ip == router2_ip)
-					write(devices[i].main_pipe_w, input, strlen(input));
+				if (devices[i].ip == router_ip)
+					break;
 			}
+			write(devices[i].main_pipe_w, input, strlen(input));
 		}
 		else if (tokens[0] == "Disconnect"){
-			string router1_ip = tokens[1], router2_ip = tokens[2], router1_port = tokens[3], router2_port = tokens[4];
+			string router_ip = tokens[1], router_port = tokens[2];
 			int i;
 			for (i=0; i<devices.size(); i++){
-				if (devices[i].ip == router1_ip)
-					write(devices[i].main_pipe_w, input, strlen(input));
-				if (devices[i].ip == router2_ip)
-					write(devices[i].main_pipe_w, input, strlen(input));
+				if (devices[i].ip == router_ip)
+					break;
 			}
+			write(devices[i].main_pipe_w, input, strlen(input));
 		}
 		else if (tokens[0] == "Show"){
 			string ip = tokens[2];
