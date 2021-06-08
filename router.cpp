@@ -36,7 +36,7 @@ int main(int argc, char* argv[]){
 			vector<string> tokens = input_tokenizer(buffer);
 			
 			if(tokens[0] == "Connect" && tokens[1] == "Router"){
-				string ip = tokens[2], router_ip = tokens[3], router_port = tokens[4];
+				string router_ip = tokens[2], router_port = tokens[3];
 				int in_fd, out_fd;
 				make_pipe(router_ip, router_port, 1, in_fd, out_fd);
 				add_connection(connection, connection_size, stoi(router_port), in_fd, out_fd);
@@ -55,17 +55,7 @@ int main(int argc, char* argv[]){
 					add_connection(connection, connection_size, stoi(router2_port), out_fd, in_fd);
 				}
 			}
-			else if (tokens[0] == "ChangeCost"){
-				string router_ip = tokens[1], router_port = tokens[2], new_cost = tokens[3];
-				for (i = 0; i < connection_size; i++){
-					if (connection[i][0] == stoi(router_port)){
-						connection[i][3] = stoi(new_cost);
-						break;
-					}
-				}
-				string msg = "ChangeCost " + new_cost;
-				write(connection[i][2], &msg[0], strlen(&msg[0]));
-			}
+			
 			else if (tokens[0] == "Disconnect"){
 				string router_ip = tokens[1], router_port = tokens[2];
 				for (i = 0; i < connection_size; i++){
@@ -94,11 +84,7 @@ int main(int argc, char* argv[]){
 				puts(buffer);
 				vector<string> tokens = input_tokenizer(buffer);
 				
-				if (tokens[0] == "ChangeCost"){
-					string new_cost = tokens[1];
-					connection[i][3] = stoi(new_cost);
-				}
-				else if (tokens[0] == "Disconnect"){
+				if (tokens[0] == "Disconnect"){
 					close(connection[i][1]);
 					close(connection[i][2]);
 					for (j = i+1; j < connection_size; j++){
