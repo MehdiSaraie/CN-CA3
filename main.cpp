@@ -38,7 +38,7 @@ int main(){
 			string msg = "Connect Router " + router_ip + " " + router_port;
 			write(devices[i].main_pipe_w, &msg[0], strlen(&msg[0]));
 		}
-		else if ((tokens[0] == "Join" || tokens[0] == "Leave" || tokens[0] == "Select") && tokens[3] == "CN"){
+		else if ((tokens[0] == "Join" || tokens[0] == "Leave" || tokens[0] == "Select" || tokens[0] == "Tree") && tokens[3] == "CN"){
 			string ip = tokens[1], group_name = tokens[2];
 			int i;
 			for (i=0; i<devices.size(); i++){

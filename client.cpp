@@ -59,6 +59,12 @@ int main(int argc, char* argv[]){
 					group_names[i-1] = group_name;
 				}
 			}
+
+			else if (tokens[0] == "Tree"){
+				string ip = tokens[1], group_name = tokens[2];
+				string msg = "datagram " + group_name;
+				write(to_router_fd, &msg[0], LENGTH);
+			}
 			
 			else if (tokens[0] == "Show" && tokens[1] == "group"){
 				string ip = tokens[2];
@@ -71,6 +77,23 @@ int main(int argc, char* argv[]){
 		if (FD_ISSET(from_router_fd, &readfds)){ //msg from router
         	memset(&buffer, 0, LENGTH);
 			read(from_router_fd, buffer, LENGTH);
+			int src_system, dest_system, label;
+			char msg[LENGTH];
+			vector<string> tokens = input_tokenizer(buffer);
+			if (tokens[0] == "datagram"){
+				string group_name = tokens[1];
+				int found = 0;
+				for (int i=0; i<group_names.size(); i++){
+					if (group_names[i] == group_name){
+						found = 1;
+						break;
+					}
+				}
+				if (found == 0){
+					string msg = "prune " + group_name;
+					write(to_router_fd, &msg[0], LENGTH);
+				}
+			}
 			
 		}
 	}

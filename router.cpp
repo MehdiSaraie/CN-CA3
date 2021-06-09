@@ -10,6 +10,8 @@ int main(int argc, char* argv[]){
 	int i, j, fd, max_fd, activity;
 	fd_set readfds;
 	char buffer[LENGTH];
+	vector<vector<int>> learning(LENGTH);
+	int sourceAddr[LENGTH]; //group_name + write_fd
 
 	while(true){
 		FD_ZERO(&readfds);
@@ -92,6 +94,40 @@ int main(int argc, char* argv[]){
 							connection[j-1][k] = connection[j][k];
 					}
 					connection_size--;
+				}
+				if (tokens[0] == "datagram"){
+					int group_name = stoi(tokens[1]);
+					sourceAddr[group_name] = connection[i][2];
+					for (j = 0; j < connection_size; j++){ //broadcast
+						if (connection[j][1] != src_fd){
+							int dest_fd = connection[j][2];
+							learning[connection[j][0]].push_back(group_name);
+							write(dest_fd, buffer, LENGTH);
+						}
+					}
+				}
+				if (tokens[0] == "prune"){
+					int group_name = stoi(tokens[1]);
+					int port = connection[i][0];
+					for (auto j = learning[port].begin(); j != learning[port].end(); ++j){
+						if (*j == group_name) {
+							learning[port].erase(j);
+							j--;
+						}
+					}
+					int found = 0;
+					for(j =0; j<learning.size(); j++)
+						for(int k =0; k<learning[j].size(); k++){
+							if(learning[j][k] == group_name){
+								found = 1;
+								break;
+							}
+						}
+					
+					if (found == 0){
+						string msg = "prune " + to_string(group_name);
+						write(sourceAddr[group_name], &msg[0], LENGTH);
+					}
 				}
 			}
 		}
