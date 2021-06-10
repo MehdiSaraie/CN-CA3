@@ -72,13 +72,25 @@ int main(int argc, char* argv[]){
 					cout << group_names[i] << "    ";
 				cout << endl;
 			}
+
+			else if (tokens[0] == "Send" && tokens[1] == "message"){
+				string ip = tokens[2], message_body = tokens[3], group_name = tokens[4];
+				string msg = "SendMsg " + group_name + " " + message_body;
+				write(to_router_fd, &msg[0], LENGTH);
+			}
+			else if (tokens[0] == "Send" && tokens[1] == "file"){
+				string ip = tokens[2], file_name = tokens[3], group_name = tokens[4];
+				vector<string> chunks = read_file_chunk(file_name);
+				for(int h=0; h<chunks.size(); h++){
+					string msg = "SendFile "+ group_name + " " + chunks[h];
+					write(to_router_fd, &msg[0], LENGTH);
+				}
+			}
 		}
 		
 		if (FD_ISSET(from_router_fd, &readfds)){ //msg from router
         	memset(&buffer, 0, LENGTH);
 			read(from_router_fd, buffer, LENGTH);
-			int src_system, dest_system, label;
-			char msg[LENGTH];
 			vector<string> tokens = input_tokenizer(buffer);
 			if (tokens[0] == "datagram"){
 				string group_name = tokens[1];
@@ -92,6 +104,9 @@ int main(int argc, char* argv[]){
 				if (found == 0){
 					string msg = "prune " + group_name;
 					write(to_router_fd, &msg[0], LENGTH);
+				}
+				if (tokens[0] == "SendMsg" || tokens[0] == "SendFile"){
+					WriteInFile(name, buffer);
 				}
 			}
 			

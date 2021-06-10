@@ -129,6 +129,16 @@ int main(int argc, char* argv[]){
 						write(sourceAddr[group_name], &msg[0], LENGTH);
 					}
 				}
+				if (tokens[0] == "SendMsg" || tokens[0] == "SendFile"){
+					int group_name = stoi(tokens[1]);
+					for(j =0; j<learning.size(); j++)
+						for(int k =0; k<learning[j].size(); k++){
+							if(learning[j][k] == group_name){
+								int dest_fd = connection[j][2];
+								write(dest_fd, buffer, LENGTH);
+							}
+						}
+				}
 			}
 		}
 	}

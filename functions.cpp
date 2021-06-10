@@ -30,3 +30,36 @@ void add_connection(int connection[][4], int& connection_size, int port_number, 
 	connection[connection_size][3] = 1;
 	connection_size++;
 }
+
+
+void WriteInFile(string name, string input){
+	string filename = "files/#"+ name;
+	ofstream outfile;
+	outfile.open(filename, ios::app);
+	outfile << input << endl;
+	outfile.close();
+}
+
+vector<string> read_file_chunk(string file_name){
+
+	const int BUFFER_SIZE = 512;
+	vector<char> buffer (BUFFER_SIZE + 1, 0);
+
+	ifstream ifile(file_name, std::ifstream::binary);
+	vector<string> chunks;
+	if (ifile.fail()){
+		cout << "No such file.\n";
+		return chunks;
+	}
+	
+	while(1)
+	{
+		ifile.read(buffer.data(), BUFFER_SIZE);
+		streamsize s = ((ifile) ? BUFFER_SIZE : ifile.gcount());
+		buffer[s] = 0;
+		chunks.push_back(buffer.data());
+		if(!ifile) break;
+	}
+	ifile.close();
+	return chunks;
+}
