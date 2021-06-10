@@ -10,8 +10,9 @@ int main(int argc, char* argv[]){
 	int i, j, fd, max_fd, activity;
 	fd_set readfds;
 	char buffer[LENGTH];
-	vector<vector<int>> learning(LENGTH);
-	int sourceAddr[LENGTH]; //group_name + write_fd
+	vector<vector<string>> learning(LENGTH);
+	map<string, int>  sourceAddr; //group_name + write_fd
+	map<string, int>::iterator itr;
 
 	while(true){
 		FD_ZERO(&readfds);
@@ -96,8 +97,11 @@ int main(int argc, char* argv[]){
 					connection_size--;
 				}
 				if (tokens[0] == "datagram"){
-					int group_name = stoi(tokens[1]);
-					sourceAddr[group_name] = connection[i][2];
+					string group_name = tokens[1];
+					itr = sourceAddr.find(group_name);
+					if (itr != sourceAddr.end())
+							itr->second = connection[i][2];
+					else sourceAddr.insert(pair<string, int>(group_name, connection[i][2]));
 					for (j = 0; j < connection_size; j++){ //broadcast
 						if (connection[j][1] != src_fd){
 							int dest_fd = connection[j][2];
@@ -107,7 +111,7 @@ int main(int argc, char* argv[]){
 					}
 				}
 				if (tokens[0] == "prune"){
-					int group_name = stoi(tokens[1]);
+					string group_name = tokens[1];
 					int port = connection[i][0];
 					for (auto j = learning[port].begin(); j != learning[port].end(); ++j){
 						if (*j == group_name) {
@@ -125,12 +129,13 @@ int main(int argc, char* argv[]){
 						}
 					
 					if (found == 0){
-						string msg = "prune " + to_string(group_name);
-						write(sourceAddr[group_name], &msg[0], LENGTH);
+						string msg = "prune " + group_name;
+						itr = sourceAddr.find(group_name);
+						write(itr->second, &msg[0], LENGTH);
 					}
 				}
 				if (tokens[0] == "SendMsg" || tokens[0] == "SendFile"){
-					int group_name = stoi(tokens[1]);
+					string group_name = tokens[1];
 					for(j =0; j<learning.size(); j++)
 						for(int k =0; k<learning[j].size(); k++){
 							if(learning[j][k] == group_name){
