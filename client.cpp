@@ -33,6 +33,8 @@ int main(int argc, char* argv[]){
 			if (tokens[0] == "Join"){
 				string ip = tokens[1], group_name = tokens[2];
 				group_names.push_back(group_name);
+				string msg = "graft " + group_name;
+				write(to_router_fd, &msg[0], strlen(&msg[0]));
 			}
 			
 			else if (tokens[0] == "Leave"){
@@ -41,6 +43,7 @@ int main(int argc, char* argv[]){
 					if (group_names[i] == group_name){
 						for (int j = i+1; j < group_names.size(); j++)
 							group_names[j-1] = group_names[j];
+						group_names.pop_back();
 						break;
 					}
 				}
@@ -56,6 +59,8 @@ int main(int argc, char* argv[]){
 						group_names[i-1] = group_names[i];
 					group_names[i-1] = group_name;
 				}
+				string msg = "graft " + group_name;
+				write(to_router_fd, &msg[0], strlen(&msg[0]));
 			}
 			
 			else if (tokens[0] == "Show" && tokens[1] == "group"){

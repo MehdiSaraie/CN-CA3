@@ -75,6 +75,20 @@ int main(int argc, char* argv[]){
 					}
 				}
 			}
+			
+			else if (tokens[0] == "Show"){
+				string ip = tokens[1];
+				for (i = 0; i < learning.size(); i++){
+					if (learning[i].size() > 0)
+						cout << "port " << i << " : ";
+					for (j = 0; j < learning[i].size(); j++){
+						cout << learning[i][j] << "   ";
+					}
+					if (learning[i].size() > 0)
+						cout << endl;
+				}
+			}
+			
 		}
 		
 		for (i = 0; i < connection_size; i++){ //msg from a device
@@ -138,7 +152,7 @@ int main(int argc, char* argv[]){
 						}
 					}
 					
-					int found = false;
+					bool found = false;
 					itr = sourceAddr.find(group_name);
 					for(j = 0; j < connection_size; j++){ //check if anybody needs message of group
 						if (connection[j][2] == itr->second)
@@ -153,6 +167,24 @@ int main(int argc, char* argv[]){
 					}
 					if (!found) //send prune message upward
 						write(itr->second, buffer, strlen(buffer));
+				}
+				
+				else if (tokens[0] == "graft"){
+					string group_name = tokens[1];
+					itr = sourceAddr.find(group_name);
+					if (itr != sourceAddr.end()){ //multicast tree has been created
+						bool found = false;
+						for (j = 0; j < learning[src_port].size(); j++){
+							if (learning[src_port][j] == group_name){
+								found = true;
+								break;
+							}
+						}
+						if (!found){
+							learning[src_port].push_back(group_name);
+						}
+						write(itr->second, buffer, strlen(buffer));
+					}
 				}
 				
 			}

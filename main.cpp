@@ -51,7 +51,7 @@ int main(){
 			}
 			write(devices[i].main_pipe_w, input, strlen(input));
 		}
-		else if ((tokens[0] == "Join" || tokens[0] == "Leave" || tokens[0] == "Select" || tokens[0] == "Tree") && tokens[3] == "CN"){
+		else if ((tokens[0] == "Join" || tokens[0] == "Leave" || tokens[0] == "Select") && tokens[3] == "CN"){
 			string ip = tokens[1], group_name = tokens[2];
 			int i;
 			for (i=0; i<devices.size(); i++){
@@ -79,24 +79,6 @@ int main(){
 			write(devices[i].main_pipe_w, input, strlen(input));
 		}
 		else if (tokens[0] == "Show" && tokens[1] == "group"){
-			string ip = tokens[2];
-			int i;
-			for (i=0; i<devices.size(); i++){
-				if (devices[i].ip == ip)
-					break;
-			}
-			write(devices[i].main_pipe_w, input, strlen(input));
-		}
-		else if (tokens[0] == "Sync"){
-			string ip = tokens[1];
-			int i;
-			for (i=0; i<devices.size(); i++){
-				if (devices[i].ip == ip)
-					break;
-			}
-			write(devices[i].main_pipe_w, input, strlen(input));
-		}
-		else if (tokens[0] == "Sign" && tokens[1] == "Out"){
 			string ip = tokens[2];
 			int i;
 			for (i=0; i<devices.size(); i++){
@@ -141,7 +123,7 @@ int main(){
 			write(devices[i].main_pipe_w, input, strlen(input));
 		}
 		else if (tokens[0] == "Show"){
-			string ip = tokens[2];
+			string ip = tokens[1];
 			int i;
 			for (i=0; i<devices.size(); i++){
 				if (devices[i].ip == ip)
