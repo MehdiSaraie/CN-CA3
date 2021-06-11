@@ -15,6 +15,8 @@ int main(){
 		getline(cin,input_str);
 		char* input = &input_str[0];
 		vector<string> tokens = input_tokenizer(input);
+		if (tokens.size() == 0)
+			continue;
 		//////////////client
 		if (tokens[0] == "Client"){
 			string name = tokens[1], router_ip = tokens[2], router_port = tokens[3];

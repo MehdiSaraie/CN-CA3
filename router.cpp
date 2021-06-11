@@ -7,11 +7,11 @@ int main(int argc, char* argv[]){
 	//int lookup_size = 0;
 	int connection[LENGTH][4];//port + read_fd + write_fd (for all connected switches or systems) + cost
 	int connection_size = 0;
-	int i, j, fd, max_fd, activity;
+	int i, j, k, fd, max_fd, activity;
 	fd_set readfds;
 	char buffer[LENGTH];
 	vector<vector<string>> learning(LENGTH);
-	map<string, int>  sourceAddr; //group_name + write_fd
+	map<string, int> sourceAddr; //group_name + write_fd
 	map<string, int>::iterator itr;
 
 	while(true){
@@ -35,7 +35,6 @@ int main(int argc, char* argv[]){
 		if (FD_ISSET(main_pipe_r, &readfds)){ //msg from main
 			memset(&buffer, 0, LENGTH);
 			read(main_pipe_r, buffer, LENGTH);
-			puts(buffer);
 			vector<string> tokens = input_tokenizer(buffer);
 			
 			if(tokens[0] == "Connect" && tokens[1] == "Router"){
@@ -84,66 +83,78 @@ int main(int argc, char* argv[]){
 			if (FD_ISSET(src_fd, &readfds)){
 				memset(&buffer, 0, LENGTH);
 				read(src_fd, buffer, LENGTH);
-				puts(buffer);
+				cout << router_ip << " :: " << buffer << endl; 
 				vector<string> tokens = input_tokenizer(buffer);
 				
 				if (tokens[0] == "Disconnect"){
 					close(connection[i][1]);
 					close(connection[i][2]);
 					for (j = i+1; j < connection_size; j++){
-						for (int k = 0; k < 4; k++)
+						for (k = 0; k < 4; k++)
 							connection[j-1][k] = connection[j][k];
 					}
 					connection_size--;
 				}
-				if (tokens[0] == "datagram"){
+				
+				else if (tokens[0] == "datagram"){
 					string group_name = tokens[1];
 					itr = sourceAddr.find(group_name);
-					if (itr != sourceAddr.end())
-							itr->second = connection[i][2];
-					else sourceAddr.insert(pair<string, int>(group_name, connection[i][2]));
-					for (j = 0; j < connection_size; j++){ //broadcast
-						if (connection[j][1] != src_fd){
-							int dest_fd = connection[j][2];
+					
+					if (itr != sourceAddr.end()){
+						itr->second = connection[i][2];
+						
+						for(j = 0; j < connection_size; j++){
+							if (connection[j][1] == src_fd)
+								continue;
+							int port_num = connection[j][0];
+							for(k = 0; k < learning[port_num].size(); k++){
+								if(learning[port_num][k] == group_name){
+									int dest_fd = connection[j][2];
+									write(dest_fd, buffer, strlen(buffer));
+								}
+							}
+						}
+					}
+					
+					else{ //first message of a group received by rooter
+						sourceAddr.insert(pair<string, int>(group_name, connection[i][2]));
+						for (j = 0; j < connection_size; j++){ //broadcast
 							learning[connection[j][0]].push_back(group_name);
-							write(dest_fd, buffer, LENGTH);
+							if (connection[j][1] != src_fd){
+								int dest_fd = connection[j][2];
+								write(dest_fd, buffer, strlen(buffer));
+							}
 						}
 					}
 				}
-				if (tokens[0] == "prune"){
+				
+				else if (tokens[0] == "prune"){
 					string group_name = tokens[1];
-					int port = connection[i][0];
-					for (auto j = learning[port].begin(); j != learning[port].end(); ++j){
-						if (*j == group_name) {
-							learning[port].erase(j);
-							j--;
+					for (auto p = learning[src_port].begin(); p != learning[src_port].end(); ++p){ //find & erase group_name from port
+						if (*p == group_name) {
+							learning[src_port].erase(p);
+							p--;
+							break;
 						}
 					}
-					int found = 0;
-					for(j =0; j<learning.size(); j++)
-						for(int k =0; k<learning[j].size(); k++){
-							if(learning[j][k] == group_name){
-								found = 1;
+					
+					int found = false;
+					itr = sourceAddr.find(group_name);
+					for(j = 0; j < connection_size; j++){ //check if anybody needs message of group
+						if (connection[j][2] == itr->second)
+							continue;
+						int port_num = connection[j][0];
+						for(k = 0; k < learning[port_num].size(); k++){
+							if(learning[port_num][k] == group_name){
+								found = true;
 								break;
 							}
 						}
-					
-					if (found == 0){
-						string msg = "prune " + group_name;
-						itr = sourceAddr.find(group_name);
-						write(itr->second, &msg[0], LENGTH);
 					}
+					if (!found) //send prune message upward
+						write(itr->second, buffer, strlen(buffer));
 				}
-				if (tokens[0] == "SendMsg" || tokens[0] == "SendFile"){
-					string group_name = tokens[1];
-					for(j =0; j<learning.size(); j++)
-						for(int k =0; k<learning[j].size(); k++){
-							if(learning[j][k] == group_name){
-								int dest_fd = connection[j][2];
-								write(dest_fd, buffer, LENGTH);
-							}
-						}
-				}
+				
 			}
 		}
 	}

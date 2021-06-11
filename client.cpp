@@ -9,7 +9,6 @@ int main(int argc, char* argv[]){
 	fd_set readfds;
 	
 	make_pipe(router_ip, router_port, 2, to_router_fd, from_router_fd);
-	cout << "yes\n";
 
 	while(true){
 		FD_ZERO(&readfds);
@@ -29,7 +28,6 @@ int main(int argc, char* argv[]){
 		if (FD_ISSET(main_pipe_r, &readfds)){ //msg from main
 			memset(&buffer, 0, LENGTH);
 			read(main_pipe_r, buffer, LENGTH);
-			puts(buffer);
 			vector<string> tokens = input_tokenizer(buffer);
 			
 			if (tokens[0] == "Join"){
@@ -59,12 +57,6 @@ int main(int argc, char* argv[]){
 					group_names[i-1] = group_name;
 				}
 			}
-
-			else if (tokens[0] == "Tree"){
-				string ip = tokens[1], group_name = tokens[2];
-				string msg = "datagram " + group_name;
-				write(to_router_fd, &msg[0], LENGTH);
-			}
 			
 			else if (tokens[0] == "Show" && tokens[1] == "group"){
 				string ip = tokens[2];
@@ -75,15 +67,15 @@ int main(int argc, char* argv[]){
 
 			else if (tokens[0] == "Send" && tokens[1] == "message"){
 				string ip = tokens[2], message_body = tokens[3], group_name = tokens[4];
-				string msg = "SendMsg " + group_name + " " + message_body;
-				write(to_router_fd, &msg[0], LENGTH);
+				string msg = "datagram " + group_name + " " + message_body;
+				write(to_router_fd, &msg[0], strlen(&msg[0]));
 			}
 			else if (tokens[0] == "Send" && tokens[1] == "file"){
 				string ip = tokens[2], file_name = tokens[3], group_name = tokens[4];
 				vector<string> chunks = read_file_chunk(file_name);
 				for(int h=0; h<chunks.size(); h++){
-					string msg = "SendFile "+ group_name + " " + chunks[h];
-					write(to_router_fd, &msg[0], LENGTH);
+					string msg = "datagram "+ group_name + " " + chunks[h];
+					write(to_router_fd, &msg[0], strlen(&msg[0]));
 				}
 			}
 		}
@@ -92,21 +84,23 @@ int main(int argc, char* argv[]){
         	memset(&buffer, 0, LENGTH);
 			read(from_router_fd, buffer, LENGTH);
 			vector<string> tokens = input_tokenizer(buffer);
+			
 			if (tokens[0] == "datagram"){
 				string group_name = tokens[1];
-				int found = 0;
-				for (int i=0; i<group_names.size(); i++){
+				bool found = false;
+				for (int i = 0; i < group_names.size(); i++){
 					if (group_names[i] == group_name){
-						found = 1;
+						found = true;
 						break;
 					}
 				}
-				if (found == 0){
+				if (found)
+					cout << name << " received message of group " << group_name << ":\n" << buffer << endl;
+					//WriteInFile(name, buffer);
+				else{
+					cout << name << " pruned message of group " << group_name << endl;
 					string msg = "prune " + group_name;
-					write(to_router_fd, &msg[0], LENGTH);
-				}
-				if (tokens[0] == "SendMsg" || tokens[0] == "SendFile"){
-					WriteInFile(name, buffer);
+					write(to_router_fd, &msg[0], strlen(&msg[0]));
 				}
 			}
 			
